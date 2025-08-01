@@ -5,6 +5,7 @@
 
 #define SEATS 32
 #define NAME_LENGTH 20
+#define MAX_BUSES 3
 
 struct Bus {
     int number;
@@ -16,81 +17,124 @@ struct Bus {
     char seatNames[SEATS][NAME_LENGTH];
 };
 
-struct Bus bus;  // only 1 bus
+struct Bus buses[MAX_BUSES];
 
-void setupBus() {
-    bus.number = 100;
-    strcpy(bus.driver, "bruno");
-    strcpy(bus.from, "pkr");
-    strcpy(bus.to, "ktm");
-    bus.departure = 1;
-    bus.arrival = 5;
+// List of sample names for random reservations
+const char *sampleNames[] = {
+    "alex", "maria", "john", "lucy", "daniel", "emma", "chris", "nora"
+};
+int sampleNameCount = sizeof(sampleNames) / sizeof(sampleNames[0]);
 
-    // Initialize seats randomly
+void setupBuses() {
     srand(time(NULL));
-    for (int i = 0; i < SEATS; i++) {
-        if (rand() % 2 == 0) {
-            strcpy(bus.seatNames[i], "");
-        } else {
-            strcpy(bus.seatNames[i], "RESERVED");
+
+    for (int i = 0; i < MAX_BUSES; i++) {
+        buses[i].number = 100 + i;
+        snprintf(buses[i].driver, NAME_LENGTH, "driver%d", i + 1);
+        strcpy(buses[i].from, "pkr");
+        strcpy(buses[i].to, "ktm");
+        buses[i].departure = 8 + i;
+        buses[i].arrival = 10 + i;
+
+        for (int j = 0; j < SEATS; j++) {
+            if (rand() % 2 == 0) {
+                strcpy(buses[i].seatNames[j], "");  // empty seat
+            } else {
+                // pick a random name from sampleNames
+                strcpy(buses[i].seatNames[j], sampleNames[rand() % sampleNameCount]);
+            }
         }
     }
 }
+
 
 void showAvailableBuses() {
     printf("\nAvailable Buses:\n");
-    printf("Bus No: %d | Driver: %s | From: %s | To: %s\n",
-           bus.number, bus.driver, bus.from, bus.to);
+    for (int i = 0; i < MAX_BUSES; i++) {
+        printf("Bus No: %d | Driver: %s | From: %s | To: %s\n",
+               buses[i].number, buses[i].driver, buses[i].from, buses[i].to);
+    }
 }
 
 void showBus() {
-    printf("*******************************************************************************\n");
-    printf("Bus no: %d\n", bus.number);
-    printf("Driver: %-10s\tArrival time: %d\tDeparture time: %d\n", bus.driver, bus.arrival, bus.departure);
-    printf("From: %-10s\tTo: %s\n", bus.from, bus.to);
-    printf("*******************************************************************************\n");
+    int busNo;
+    printf("Enter bus number to show: ");
+    scanf("%d", &busNo);
 
-    int availableSeats = 0;
-    for (int i = 0; i < SEATS; i++) {
-        if (strcmp(bus.seatNames[i], "") == 0) {
-            printf("%2d. %-10s", i + 1, "Empty");
-            availableSeats++;
-        } else {
-            printf("%2d. %-10s", i + 1, bus.seatNames[i]);
+    for (int i = 0; i < MAX_BUSES; i++) {
+        if (buses[i].number == busNo) {
+            struct Bus *bus = &buses[i];
+
+            printf("*******************************************************************************\n");
+            printf("Bus no: %d\n", bus->number);
+            printf("Driver: %-10s\tArrival time: %d\tDeparture time: %d\n", bus->driver, bus->arrival, bus->departure);
+            printf("From: %-10s\tTo: %s\n", bus->from, bus->to);
+            printf("*******************************************************************************\n");
+
+            int availableSeats = 0;
+            for (int j = 0; j < SEATS; j++) {
+                if (strcmp(bus->seatNames[j], "") == 0) {
+                    printf("%2d. %-10s", j + 1, "Empty");
+                    availableSeats++;
+                } else {
+                    printf("%2d. %-10s", j + 1, bus->seatNames[j]);
+                }
+                if ((j + 1) % 4 == 0) printf("\n");
+            }
+
+            printf("\nThere are %d seats empty in Bus No: %d\n", availableSeats, bus->number);
+            return;
         }
-        if ((i + 1) % 4 == 0) printf("\n");
     }
 
-    printf("\nThere are %d seats empty in Bus No: %d\n", availableSeats, bus.number);
+    printf("Bus number %d not found.\n", busNo);
 }
 
 void reserveSeat() {
-    int seat;
-    printf("Enter seat number to reserve (1–32): ");
-    scanf("%d", &seat);
-    getchar();  // clear newline
+    int busNo;
+    printf("Enter bus number to reserve a seat in: ");
+    scanf("%d", &busNo);
 
-    if (seat < 1 || seat > SEATS) {
-        printf("Invalid seat number.\n");
-        return;
+    for (int i = 0; i < MAX_BUSES; i++) {
+        if (buses[i].number == busNo) {
+            struct Bus *bus = &buses[i];
+
+            int seat;
+            while (1) {
+                printf("Enter seat number to reserve (1-32): ");
+                scanf("%d", &seat);
+                getchar();  // clear newline
+
+                if (seat < 1 || seat > SEATS) {
+                    printf("Invalid seat number.\n");
+                    continue;
+                }
+
+                if (strcmp(bus->seatNames[seat - 1], "") != 0) {
+                    printf("Seat %d is already reserved by '%s'. Try again.\n", seat, bus->seatNames[seat - 1]);
+                    continue;
+                }
+
+                break;  // valid seat found
+            }
+
+            char name[NAME_LENGTH];
+            printf("Enter your name: ");
+            fgets(name, NAME_LENGTH, stdin);
+            name[strcspn(name, "\n")] = 0;  // remove newline
+
+            strcpy(bus->seatNames[seat - 1], name);
+            printf("Seat %d reserved for %s in Bus %d.\n", seat, name, bus->number);
+            return;
+        }
     }
 
-    if (strcmp(bus.seatNames[seat - 1], "") != 0) {
-        printf("Seat %d is already taken.\n", seat);
-        return;
-    }
-
-    char name[NAME_LENGTH];
-    printf("Enter your name: ");
-    fgets(name, NAME_LENGTH, stdin);
-    name[strcspn(name, "\n")] = 0;  // remove newline
-
-    strcpy(bus.seatNames[seat - 1], name);
-    printf("Seat %d reserved for %s.\n", seat, name);
+    printf("Bus number %d not found.\n", busNo);
 }
 
 int main() {
-    setupBus();  // Preload a bus
+    setupBuses();  // Preload multiple buses
+
     int choice;
 
     while (1) {
