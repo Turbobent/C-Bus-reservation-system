@@ -58,13 +58,25 @@ void showAvailableBuses() {
                buses[i].number, buses[i].driver, buses[i].from, buses[i].to, available);
     }
 }
+
 void printBusHeader(struct Bus *bus) {
     printf("*******************************************************************************\n");
     printf("Bus no: %d\n", bus->number);
     printf("Driver: %-10s\tArrival time: %d\tDeparture time: %d\n", bus->driver, bus->arrival, bus->departure);
     printf("From: %-10s\tTo: %s\n", bus->from, bus->to);
     printf("*******************************************************************************\n");
+
+    for (int j = 0; j < SEATS; j++) {
+        if (strcmp(bus->seatNames[j], "") == 0) {
+            printf("%2d. %-10s", j + 1, "Empty");
+        } else {
+            printf("%2d. %-10s", j + 1, bus->seatNames[j]);
+        }
+
+        if ((j + 1) % 4 == 0) printf("\n");
+    }
 }
+
 
 void showBus() {
     int busNo;
@@ -77,18 +89,6 @@ void showBus() {
 
             printBusHeader(bus);
 
-            int availableSeats = 0;
-            for (int j = 0; j < SEATS; j++) {
-                if (strcmp(bus->seatNames[j], "") == 0) {
-                    printf("%2d. %-10s", j + 1, "Empty");
-                    availableSeats++;
-                } else {
-                    printf("%2d. %-10s", j + 1, bus->seatNames[j]);
-                }
-                if ((j + 1) % 4 == 0) printf("\n");
-            }
-
-            printf("\nThere are %d seats empty in Bus No: %d\n", availableSeats, bus->number);
             return;
         }
     }
