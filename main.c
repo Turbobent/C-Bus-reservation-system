@@ -19,7 +19,7 @@ struct Bus {
 
 struct Bus buses[MAX_BUSES];
 
-// List of sample names for random reservations
+// Sample names for random reservations
 const char *sampleNames[] = {
     "alex", "maria", "john", "lucy", "daniel", "emma", "chris", "nora"
 };
@@ -40,20 +40,30 @@ void setupBuses() {
             if (rand() % 2 == 0) {
                 strcpy(buses[i].seatNames[j], "");  // empty seat
             } else {
-                // pick a random name from sampleNames
                 strcpy(buses[i].seatNames[j], sampleNames[rand() % sampleNameCount]);
             }
         }
     }
 }
 
-
 void showAvailableBuses() {
     printf("\nAvailable Buses:\n");
     for (int i = 0; i < MAX_BUSES; i++) {
-        printf("Bus No: %d | Driver: %s | From: %s | To: %s\n",
-               buses[i].number, buses[i].driver, buses[i].from, buses[i].to);
+        int available = 0;
+        for (int j = 0; j < SEATS; j++) {
+            if (strcmp(buses[i].seatNames[j], "") == 0)
+                available++;
+        }
+        printf("Bus No: %d | Driver: %-10s | From: %-5s | To: %-5s | Available Seats: %d\n",
+               buses[i].number, buses[i].driver, buses[i].from, buses[i].to, available);
     }
+}
+void printBusHeader(struct Bus *bus) {
+    printf("*******************************************************************************\n");
+    printf("Bus no: %d\n", bus->number);
+    printf("Driver: %-10s\tArrival time: %d\tDeparture time: %d\n", bus->driver, bus->arrival, bus->departure);
+    printf("From: %-10s\tTo: %s\n", bus->from, bus->to);
+    printf("*******************************************************************************\n");
 }
 
 void showBus() {
@@ -65,11 +75,7 @@ void showBus() {
         if (buses[i].number == busNo) {
             struct Bus *bus = &buses[i];
 
-            printf("*******************************************************************************\n");
-            printf("Bus no: %d\n", bus->number);
-            printf("Driver: %-10s\tArrival time: %d\tDeparture time: %d\n", bus->driver, bus->arrival, bus->departure);
-            printf("From: %-10s\tTo: %s\n", bus->from, bus->to);
-            printf("*******************************************************************************\n");
+            printBusHeader(bus);
 
             int availableSeats = 0;
             for (int j = 0; j < SEATS; j++) {
@@ -99,11 +105,12 @@ void reserveSeat() {
         if (buses[i].number == busNo) {
             struct Bus *bus = &buses[i];
 
+            printBusHeader(bus);
             int seat;
             while (1) {
                 printf("Enter seat number to reserve (1-32): ");
                 scanf("%d", &seat);
-                getchar();  // clear newline
+                while ((getchar()) != '\n');  // flush newline
 
                 if (seat < 1 || seat > SEATS) {
                     printf("Invalid seat number.\n");
@@ -115,13 +122,13 @@ void reserveSeat() {
                     continue;
                 }
 
-                break;  // valid seat found
+                break;
             }
 
             char name[NAME_LENGTH];
             printf("Enter your name: ");
             fgets(name, NAME_LENGTH, stdin);
-            name[strcspn(name, "\n")] = 0;  // remove newline
+            name[strcspn(name, "\n")] = 0;
 
             strcpy(bus->seatNames[seat - 1], name);
             printf("Seat %d reserved for %s in Bus %d.\n", seat, name, bus->number);
@@ -133,17 +140,16 @@ void reserveSeat() {
 }
 
 int main() {
-    setupBuses();  // Preload multiple buses
+    setupBuses();  // Load bus data
 
     int choice;
 
     while (1) {
-        printf("\n\t\t***SIMPLE BUS RESERVATION SYSTEM***\n");
+        printf("\n\t\t*** SIMPLE BUS RESERVATION SYSTEM ***\n");
         printf("\n\t1. Reservation");
-        printf("\n\t2. Show");
+        printf("\n\t2. Show Bus Seats");
         printf("\n\t3. Buses Available");
         printf("\n\t4. Exit");
-
         printf("\n\nEnter your choice: ");
         scanf("%d", &choice);
 
